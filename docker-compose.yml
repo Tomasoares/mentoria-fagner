@@ -1,0 +1,50 @@
+version: "3"
+services:
+  mongo-db:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tomas
+      MONGO_INITDB_ROOT_PASSWORD: tomas
+      MONGO_INITDB_DATABASE: ceps
+    networks:
+      - tomas
+
+  codigo-postal:
+    build: ./codigo-postal
+    ports:
+      - "7077:7077"
+    networks:
+      - tomas
+    depends_on:
+      - mongo-db
+
+  pessoa:
+    build:
+      context: ./pessoa
+      dockerfile: ./src/main/docker/Dockerfile.jvm
+    ports:
+      - "8080:8080"
+    networks:
+      - tomas
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "9090:9090"
+    networks:
+      - tomas
+    depends_on:
+      - codigo-postal
+      - pessoa
+    environment:
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_URI: http://codigo-postal:7077
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_ID: codigo-postal
+      SPRING_CLOUD_GATEWAY_ROUTES[0]_PREDICATES[0]: Path= /api/v1/**
+      SPRING_CLOUD_GATEWAY_ROUTES[1]_URI: http://pessoa:8080
+      SPRING_CLOUD_GATEWAY_ROUTES[1]_ID: pessoa
+      SPRING_CLOUD_GATEWAY_ROUTES[1]_PREDICATES[0]: Path= /pessoas/**
+
+networks:
+  tomas:

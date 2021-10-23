@@ -1,0 +1,14 @@
+server:
+  port: 9090
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: codigo-postal
+          uri: 'http://localhost:7077'
+          predicates:
+            - Path=/api/v1/**
+        - id: pessoa
+          uri: 'http://localhost:8080'
+          predicates:
+            - Path=/pessoas/**
